@@ -589,36 +589,48 @@ function toggleMic() {
     toast('⚠️ Usá Chrome para dictar por voz');
     return;
   }
-  if (grabando) { recognition.stop(); return; }
+  if (grabando) {
+    recognition.stop();
+    return;
+  }
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SR();
   recognition.lang = 'es-AR';
-  recognition.continuous = true;
-  recognition.interimResults = true;
+  recognition.continuous = false;      // ← en Android continuous causa repetición
+  recognition.interimResults = false;  // ← solo resultado final, limpio
+
+  let textoAcumulado = document.getElementById('dictadoInput').value.trim();
 
   recognition.onstart = () => {
     grabando = true;
     document.getElementById('btnMic').classList.add('recording');
     document.getElementById('btnMic').textContent = '⏹️';
-    document.getElementById('micStatus').textContent = '🔴 Grabando... tocá el botón para parar';
+    document.getElementById('micStatus').textContent = '🔴 Hablá... se detiene solo al pausar';
   };
 
   recognition.onresult = (e) => {
-    let texto = '';
-    for (let i = 0; i < e.results.length; i++) texto += e.results[i][0].transcript + ' ';
-    document.getElementById('dictadoInput').value = texto.trim();
+    // Solo tomamos el último resultado final
+    const nuevo = e.results[e.results.length - 1][0].transcript.trim();
+    // Acumulamos con lo que ya había escrito
+    textoAcumulado = textoAcumulado ? textoAcumulado + ' ' + nuevo : nuevo;
+    document.getElementById('dictadoInput').value = textoAcumulado;
   };
 
   recognition.onerror = (e) => {
-    document.getElementById('micStatus').textContent = 'Error de micrófono: ' + e.error;
+    grabando = false;
+    document.getElementById('btnMic').classList.remove('recording');
+    document.getElementById('btnMic').textContent = '🎙️';
+    if (e.error !== 'no-speech') {
+      document.getElementById('micStatus').textContent = '⚠️ Error: ' + e.error;
+    }
   };
 
   recognition.onend = () => {
     grabando = false;
     document.getElementById('btnMic').classList.remove('recording');
     document.getElementById('btnMic').textContent = '🎙️';
-    document.getElementById('micStatus').textContent = '✓ Listo. Revisá el texto y ajustá si hace falta.';
+    document.getElementById('micStatus').textContent = '✓ Listo. Tocá el mic para seguir dictando o editá el texto.';
   };
 
   recognition.start();
