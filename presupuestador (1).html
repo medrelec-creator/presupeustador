@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>⚡ Presupuestador</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f13;
+  --surface: #1a1a22;
+  --surface2: #22222e;
+  --border: #2e2e3e;
+  --accent: #f5c842;
+  --accent2: #e8453c;
+  --green: #3ecf8e;
+  --text: #f0f0f0;
+  --text2: #9090a8;
+  --text3: #5a5a72;
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── SCREENS ── */
+.screen { display: none; flex-direction: column; min-height: 100vh; padding: 0 0 32px; }
+.screen.active { display: flex; }
+
+/* ── TOPBAR ── */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 20px 0;
+  position: sticky; top: 0; z-index: 10;
+  background: linear-gradient(var(--bg) 80%, transparent);
+}
+.topbar-title { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+.topbar-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.icon-btn {
+  width: 38px; height: 38px; border-radius: 50%; background: var(--surface);
+  border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 16px; transition: background 0.15s;
+}
+.icon-btn:active { background: var(--surface2); }
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface); border-radius: var(--radius);
+  border: 1px solid var(--border); margin: 12px 16px 0; padding: 18px;
+}
+.card-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--text3); margin-bottom: 12px;
+}
+
+/* ── INPUTS ── */
+input[type=text], input[type=number], textarea {
+  width: 100%; background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); padding: 13px 14px; font-size: 15px;
+  font-family: 'DM Sans', sans-serif; color: var(--text); outline: none;
+  transition: border-color 0.2s;
+}
+input:focus, textarea:focus { border-color: var(--accent); }
+textarea { resize: none; line-height: 1.5; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  border: none; border-radius: var(--radius-sm); padding: 14px 20px;
+  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s; width: 100%;
+}
+.btn:active { transform: scale(0.97); }
+.btn-accent { background: var(--accent); color: #0f0f13; }
+.btn-accent:hover { background: #f7d060; }
+.btn-green { background: var(--green); color: #0f0f13; }
+.btn-ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+.btn-danger { background: var(--accent2); color: white; }
+.btn-sm { padding: 9px 14px; font-size: 13px; width: auto; }
+
+/* ── MIC BUTTON ── */
+.mic-wrap { display: flex; gap: 10px; margin-top: 10px; }
+.btn-mic {
+  width: 52px; height: 52px; border-radius: 50%; background: var(--accent2);
+  border: none; font-size: 20px; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; box-shadow: 0 0 0 0 rgba(232,69,60,0.4);
+}
+.btn-mic.recording {
+  animation: mic-pulse 1.2s infinite;
+  background: #c1121f;
+}
+@keyframes mic-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(232,69,60,0.5); }
+  70% { box-shadow: 0 0 0 14px rgba(232,69,60,0); }
+  100% { box-shadow: 0 0 0 0 rgba(232,69,60,0); }
+}
+.mic-input-wrap { flex: 1; position: relative; }
+.mic-input-wrap textarea { padding-right: 14px; min-height: 52px; }
+
+/* ── STEP INDICATOR ── */
+.steps {
+  display: flex; gap: 6px; padding: 16px 20px 0;
+}
+.step {
+  flex: 1; height: 3px; border-radius: 99px; background: var(--surface2);
+  transition: background 0.3s;
+}
+.step.done { background: var(--accent); }
+.step.active { background: var(--accent); opacity: 0.5; }
+
+/* ── ITEMS TABLE ── */
+.item-card {
+  background: var(--surface2); border-radius: var(--radius-sm);
+  border: 1px solid var(--border); padding: 12px 14px; margin-bottom: 8px;
+}
+.item-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.item-badge {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+  padding: 3px 8px; border-radius: 20px; text-transform: uppercase;
+}
+.badge-mat { background: rgba(245,200,66,0.15); color: var(--accent); }
+.badge-mo { background: rgba(62,207,142,0.15); color: var(--green); }
+.badge-est { background: rgba(144,144,168,0.15); color: var(--text2); font-size: 9px; }
+.item-desc-input {
+  background: transparent; border: none; border-bottom: 1px solid var(--border);
+  border-radius: 0; padding: 4px 0; font-size: 14px; font-weight: 500;
+  color: var(--text); width: 100%; outline: none;
+}
+.item-desc-input:focus { border-bottom-color: var(--accent); }
+.item-row { display: flex; gap: 8px; margin-top: 10px; }
+.item-row .field { flex: 1; }
+.item-row .field label { font-size: 10px; color: var(--text3); display: block; margin-bottom: 4px; }
+.item-row .field input {
+  padding: 8px 10px; font-size: 13px; font-family: 'DM Mono', monospace;
+}
+.item-subtotal {
+  display: flex; align-items: center; justify-content: flex-end;
+  font-family: 'DM Mono', monospace; font-size: 13px; color: var(--accent);
+  font-weight: 500; margin-top: 8px;
+}
+.del-btn {
+  background: none; border: none; color: var(--text3); cursor: pointer;
+  font-size: 16px; padding: 4px; line-height: 1; margin-left: auto;
+}
+.del-btn:active { color: var(--accent2); }
+
+/* ── ADICIONALES ── */
+.adicional-row {
+  display: flex; gap: 8px; align-items: center; margin-bottom: 8px;
+}
+.adicional-row input[type=text] { flex: 1; padding: 10px 12px; font-size: 13px; }
+.adicional-row input[type=number] { width: 100px; padding: 10px 12px; font-size: 13px; font-family: 'DM Mono', monospace; }
+
+/* ── SLIDER ── */
+.slider-group { margin-bottom: 16px; }
+.slider-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.slider-name { font-size: 13px; color: var(--text2); }
+.slider-val { font-family: 'DM Mono', monospace; font-size: 16px; color: var(--accent); font-weight: 500; }
+input[type=range] {
+  width: 100%; -webkit-appearance: none; height: 4px;
+  background: var(--border); border-radius: 99px; outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 22px; height: 22px;
+  border-radius: 50%; background: var(--accent); cursor: pointer;
+  box-shadow: 0 2px 8px rgba(245,200,66,0.4);
+}
+.slider-labels { display: flex; justify-content: space-between; margin-top: 4px; }
+.slider-labels span { font-size: 10px; color: var(--text3); }
+
+/* ── TOTALES ── */
+.totales-box {
+  background: var(--surface2); border-radius: var(--radius-sm);
+  border: 1px solid var(--border); overflow: hidden; margin-top: 4px;
+}
+.totales-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 14px;
+}
+.totales-row:last-child { border-bottom: none; }
+.totales-row.total {
+  background: var(--accent); color: #0f0f13;
+  font-weight: 700; font-size: 16px; padding: 14px;
+}
+.totales-row.efectivo { background: rgba(62,207,142,0.08); color: var(--green); font-weight: 600; }
+.totales-num { font-family: 'DM Mono', monospace; font-weight: 600; }
+
+/* ── PREVIEW WHATSAPP ── */
+.wa-preview {
+  background: #1e3a2f; border-radius: var(--radius-sm);
+  padding: 16px; font-size: 14px; line-height: 1.7;
+  color: #dcfce7; font-family: 'DM Mono', monospace;
+  white-space: pre-wrap; word-break: break-word;
+  border: 1px solid #2d5a3d; min-height: 100px;
+}
+.wa-bubble-header {
+  background: #128c7e; border-radius: 12px 12px 0 0;
+  padding: 10px 14px; font-size: 12px; color: white; font-weight: 600;
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* ── CHECKBOX ── */
+.check-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 0; cursor: pointer;
+}
+.check-row input[type=checkbox] {
+  width: 20px; height: 20px; accent-color: var(--accent);
+  flex-shrink: 0; cursor: pointer;
+}
+.check-row span { font-size: 14px; color: var(--text2); }
+
+/* ── CONFIG SCREEN ── */
+.config-hero {
+  text-align: center; padding: 40px 24px 24px;
+}
+.config-hero .icon { font-size: 48px; margin-bottom: 16px; }
+.config-hero h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.config-hero p { font-size: 14px; color: var(--text2); line-height: 1.6; }
+.api-input-wrap { position: relative; margin-top: 8px; }
+.api-input-wrap input { padding-right: 48px; font-family: 'DM Mono', monospace; font-size: 13px; }
+.api-toggle {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px;
+}
+.copy-hint {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(245,200,66,0.08); border: 1px solid rgba(245,200,66,0.2);
+  border-radius: var(--radius-sm); padding: 12px 14px; margin-top: 12px;
+  font-size: 12px; color: var(--accent); line-height: 1.5;
+}
+
+/* ── SPINNER ── */
+.spinner {
+  width: 18px; height: 18px; border: 2px solid rgba(15,15,19,0.3);
+  border-top-color: #0f0f13; border-radius: 50%;
+  animation: spin 0.7s linear infinite; display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 99px;
+  padding: 12px 24px; font-size: 14px; font-weight: 500;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 999;
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── EMPTY STATE ── */
+.empty {
+  text-align: center; padding: 32px 20px; color: var(--text3); font-size: 14px;
+}
+.empty .emoji { font-size: 36px; display: block; margin-bottom: 10px; }
+
+/* ── DIVIDER ── */
+.divider {
+  display: flex; align-items: center; gap: 12px; margin: 4px 0;
+  color: var(--text3); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+}
+.divider::before, .divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* ── ALERT ── */
+.alert {
+  border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13px; margin-top: 8px;
+  line-height: 1.5;
+}
+.alert-ok { background: rgba(62,207,142,0.1); color: var(--green); border: 1px solid rgba(62,207,142,0.2); }
+.alert-err { background: rgba(232,69,60,0.1); color: #f87171; border: 1px solid rgba(232,69,60,0.2); }
+
+/* ── LOGO ── */
+.logo { font-size: 24px; font-weight: 700; letter-spacing: -1px; }
+.logo span { color: var(--accent); }
+
+/* ── ANIMACIONES ── */
+.fade-in { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Bottom padding para scroll */
+.bottom-pad { height: 24px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN 0: CONFIGURACIÓN API KEY
+═══════════════════════════════════════════════ -->
+<div class="screen active" id="screen-config">
+  <div class="topbar">
+    <div>
+      <div class="logo">⚡ Presu<span>.</span></div>
+      <div class="topbar-sub">Presupuestador Eléctrico</div>
+    </div>
+  </div>
+
+  <div class="config-hero">
+    <div class="icon">🔑</div>
+    <h2>Configurá tu API Key</h2>
+    <p>Pegá tu clave de Anthropic para que la IA pueda interpretar tus presupuestos. Se guarda en tu dispositivo y no se comparte con nadie.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-label">API Key de Anthropic</div>
+    <div class="api-input-wrap">
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off">
+      <button class="api-toggle" onclick="toggleApiVis()" id="apiToggleBtn">👁️</button>
+    </div>
+    <div class="copy-hint">
+      💡 Conseguila en <strong>console.anthropic.com</strong> → API Keys → Create Key. Copiá y pegá acá.
+    </div>
+  </div>
+
+  <div style="padding: 12px 16px 0;">
+    <button class="btn btn-accent" onclick="guardarApiKey()">
+      Guardar y continuar →
+    </button>
+  </div>
+
+  <div class="bottom-pad"></div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN 1: INICIO — DICTADO
+═══════════════════════════════════════════════ -->
+<div class="screen" id="screen-inicio">
+  <div class="topbar">
+    <div>
+      <div class="logo">⚡ Presu<span>.</span></div>
+      <div class="topbar-sub" id="topbar-sub-inicio">Listo para presupuestar</div>
+    </div>
+    <div class="icon-btn" onclick="irAConfig()" title="Configuración">⚙️</div>
+  </div>
+
+  <div class="steps" id="steps-inicio">
+    <div class="step active"></div>
+    <div class="step"></div>
+    <div class="step"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Cliente</div>
+    <input type="text" id="clienteInput" placeholder="Nombre del cliente...">
+  </div>
+
+  <div class="card">
+    <div class="card-label">Describí el trabajo</div>
+    <div class="mic-wrap">
+      <div class="mic-input-wrap">
+        <textarea id="dictadoInput" rows="4" placeholder="Dictá con el micrófono o escribí acá...&#10;&#10;Ej: cambio 3 térmicas seccionales Steck e instalo peine eléctrico"></textarea>
+      </div>
+      <button class="btn-mic" id="btnMic" onclick="toggleMic()">🎙️</button>
+    </div>
+    <div id="micStatus" style="font-size:12px;color:var(--text3);margin-top:8px;min-height:16px;text-align:center"></div>
+  </div>
+
+  <div style="padding: 12px 16px 0;">
+    <button class="btn btn-accent" onclick="interpretarTrabajo()" id="btnInterpretar">
+      Interpretar con IA ✨
+    </button>
+  </div>
+
+  <div class="bottom-pad"></div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN 2: EDITOR DE PRESUPUESTO
+═══════════════════════════════════════════════ -->
+<div class="screen" id="screen-editor">
+  <div class="topbar">
+    <div class="icon-btn" onclick="volverAInicio()">←</div>
+    <div style="text-align:center">
+      <div class="topbar-title" id="editorCliente">Presupuesto</div>
+      <div class="topbar-sub">Editá y ajustá</div>
+    </div>
+    <div class="icon-btn" onclick="irAPreview()">→</div>
+  </div>
+
+  <div class="steps">
+    <div class="step done"></div>
+    <div class="step active"></div>
+    <div class="step"></div>
+  </div>
+
+  <!-- Items -->
+  <div class="card">
+    <div class="card-label">Materiales y Mano de Obra</div>
+    <div id="itemsContainer">
+      <div class="empty"><span class="emoji">🔧</span>Los ítems aparecen acá</div>
+    </div>
+
+    <!-- Agregar manual -->
+    <div class="divider" style="margin-top:12px">agregar</div>
+    <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+      <select id="nuevoTipo" style="background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:11px 10px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;flex-shrink:0">
+        <option value="material">🔧 Material</option>
+        <option value="mano_obra">👷 Mano de obra</option>
+      </select>
+      <input type="text" id="nuevaDesc" placeholder="Descripción..." style="flex:1">
+      <button class="btn btn-sm btn-ghost" onclick="agregarItemManual()" style="flex-shrink:0">+</button>
+    </div>
+  </div>
+
+  <!-- Adicionales -->
+  <div class="card">
+    <div class="card-label">Adicionales</div>
+    <div id="adicionalesContainer"></div>
+    <div class="adicional-row" style="margin-top:8px">
+      <input type="text" id="adDesc" placeholder="Descripción adicional...">
+      <input type="number" id="adPrecio" placeholder="$0">
+      <button class="btn btn-sm btn-ghost" onclick="agregarAdicional()" style="flex-shrink:0;width:36px;padding:8px">+</button>
+    </div>
+  </div>
+
+  <!-- Ajustes -->
+  <div class="card">
+    <div class="card-label">Ajustes del presupuesto</div>
+
+    <div class="slider-group">
+      <div class="slider-top">
+        <span class="slider-name">Dificultad del trabajo</span>
+        <span class="slider-val" id="dificultadVal">+0%</span>
+      </div>
+      <input type="range" id="dificultad" min="0" max="50" value="0" step="5" oninput="onSlider()">
+      <div class="slider-labels"><span>Normal</span><span>Complicado</span><span>Muy difícil</span></div>
+    </div>
+
+    <div style="margin-top:8px">
+      <label style="font-size:12px;color:var(--text3);display:block;margin-bottom:6px">Movilidad / Viáticos ($)</label>
+      <input type="number" id="movilidad" placeholder="0" oninput="recalcular()">
+    </div>
+  </div>
+
+  <!-- Descuento -->
+  <div class="card">
+    <div class="card-label">Descuento en efectivo</div>
+    <input type="number" id="descuento" placeholder="Precio final en efectivo (opcional)" oninput="recalcular()">
+  </div>
+
+  <!-- Totales -->
+  <div class="card">
+    <div class="card-label">Resumen</div>
+    <div class="totales-box" id="totalesBox"></div>
+  </div>
+
+  <div style="padding: 12px 16px 0;">
+    <button class="btn btn-accent" onclick="irAPreview()">
+      Ver preview para cliente →
+    </button>
+  </div>
+  <div class="bottom-pad"></div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN 3: PREVIEW Y COPIAR
+═══════════════════════════════════════════════ -->
+<div class="screen" id="screen-preview">
+  <div class="topbar">
+    <div class="icon-btn" onclick="irAEditor()">←</div>
+    <div style="text-align:center">
+      <div class="topbar-title">Preview cliente</div>
+      <div class="topbar-sub">Revisá antes de mandar</div>
+    </div>
+    <div style="width:38px"></div>
+  </div>
+
+  <div class="steps">
+    <div class="step done"></div>
+    <div class="step done"></div>
+    <div class="step active"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Opciones del mensaje</div>
+    <label class="check-row">
+      <input type="checkbox" id="conDetalle" onchange="actualizarPreview()">
+      <span>Mostrar detalle de cada trabajo con precio</span>
+    </label>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="wa-bubble-header">
+      <span>💬</span> Vista previa WhatsApp
+    </div>
+    <div style="padding:14px">
+      <div class="wa-preview" id="waPreview">Cargando preview...</div>
+    </div>
+  </div>
+
+  <div style="padding: 12px 16px 0; display:flex; flex-direction:column; gap:10px;">
+    <button class="btn btn-green" onclick="copiarWhatsApp()" id="btnCopiar">
+      📋 Copiar para WhatsApp
+    </button>
+    <button class="btn btn-ghost" onclick="nuevoPresupuesto()">
+      ➕ Nuevo presupuesto
+    </button>
+  </div>
+
+  <div class="bottom-pad"></div>
+</div>
+
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════════════════════
+let presupuesto = {
+  cliente: '',
+  items: [],
+  adicionales: [],
+  dificultad: 0,
+  movilidad: 0,
+  descuento: 0,
+  total: 0,
+  notasCliente: [],
+  resumen: ''
+};
+
+let recognition = null;
+let grabando = false;
+
+// ═══════════════════════════════════════════════════════════
+// NAVEGACIÓN
+// ═══════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function irAConfig() { showScreen('screen-config'); }
+function volverAInicio() { showScreen('screen-inicio'); }
+function irAEditor() { showScreen('screen-editor'); }
+
+function irAPreview() {
+  recopilarAjustes();
+  actualizarPreview();
+  showScreen('screen-preview');
+}
+
+// ═══════════════════════════════════════════════════════════
+// API KEY
+// ═══════════════════════════════════════════════════════════
+function guardarApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key.startsWith('sk-')) {
+    toast('⚠️ La API key debe empezar con sk-');
+    return;
+  }
+  localStorage.setItem('anthropic_key', key);
+  toast('✅ API Key guardada');
+  showScreen('screen-inicio');
+}
+
+function toggleApiVis() {
+  const inp = document.getElementById('apiKeyInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  document.getElementById('apiToggleBtn').textContent = inp.type === 'password' ? '👁️' : '🙈';
+}
+
+function getApiKey() {
+  return localStorage.getItem('anthropic_key') || '';
+}
+
+// ═══════════════════════════════════════════════════════════
+// MICRÓFONO
+// ═══════════════════════════════════════════════════════════
+function toggleMic() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    toast('⚠️ Usá Chrome para dictar por voz');
+    return;
+  }
+  if (grabando) { recognition.stop(); return; }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'es-AR';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  recognition.onstart = () => {
+    grabando = true;
+    document.getElementById('btnMic').classList.add('recording');
+    document.getElementById('btnMic').textContent = '⏹️';
+    document.getElementById('micStatus').textContent = '🔴 Grabando... tocá el botón para parar';
+  };
+
+  recognition.onresult = (e) => {
+    let texto = '';
+    for (let i = 0; i < e.results.length; i++) texto += e.results[i][0].transcript + ' ';
+    document.getElementById('dictadoInput').value = texto.trim();
+  };
+
+  recognition.onerror = (e) => {
+    document.getElementById('micStatus').textContent = 'Error de micrófono: ' + e.error;
+  };
+
+  recognition.onend = () => {
+    grabando = false;
+    document.getElementById('btnMic').classList.remove('recording');
+    document.getElementById('btnMic').textContent = '🎙️';
+    document.getElementById('micStatus').textContent = '✓ Listo. Revisá el texto y ajustá si hace falta.';
+  };
+
+  recognition.start();
+}
+
+// ═══════════════════════════════════════════════════════════
+// INTERPRETAR CON IA
+// ═══════════════════════════════════════════════════════════
+async function interpretarTrabajo() {
+  const texto = document.getElementById('dictadoInput').value.trim();
+  if (!texto) { toast('⚠️ Describí el trabajo primero'); return; }
+
+  const key = getApiKey();
+  if (!key) { toast('⚠️ Configurá tu API key primero'); irAConfig(); return; }
+
+  const btn = document.getElementById('btnInterpretar');
+  btn.innerHTML = '<span class="spinner"></span> Interpretando...';
+  btn.disabled = true;
+
+  presupuesto.cliente = document.getElementById('clienteInput').value.trim() || 'Cliente';
+
+  // Leer materiales del Sheet del local
+  let materialesCtx = '';
+  try {
+    const sheetData = await leerSheetLocal();
+    materialesCtx = sheetData;
+  } catch(e) {
+    materialesCtx = 'No se pudo acceder al sheet de materiales. Estimá precios de materiales eléctricos argentinos.';
+  }
+
+  const prompt = `Sos un asistente de un electricista argentino que arma presupuestos de trabajos eléctricos.
+
+El electricista describió este trabajo: "${texto}"
+
+LISTA DE PRECIOS DE MATERIALES (del local eléctrico):
+${materialesCtx}
+
+MANO DE OBRA ESTIMADA (precios típicos Argentina 2024-2025):
+- Instalación térmica seccional: $18.000 por unidad
+- Instalación disyuntor: $20.000 por unidad  
+- Instalación tomacorriente simple: $15.000 por unidad
+- Instalación tomacorriente doble: $20.000 por unidad
+- Instalación artefacto de luz: $12.000 por unidad
+- Canalización canaleta por metro: $8.000 por metro
+- Canalización caño PVC por metro: $10.000 por metro
+- Armado tablero embutido: $45.000 global
+- Instalación peine eléctrico: $15.000 global
+- Trabajo general por hora: $12.000 por hora
+
+Tu tarea: interpretá el trabajo y generá el presupuesto en JSON.
+Buscá cada material en la lista de precios. Si no está exacto, usá el más parecido.
+Marcá estimado:true cuando el precio no viene de la lista.
+
+Respondé SOLO con JSON válido, sin texto extra ni backticks markdown:
+{
+  "items": [
+    {
+      "tipo": "material",
+      "descripcion": "descripción clara",
+      "marca": "marca si corresponde",
+      "cantidad": 1,
+      "precioUnitario": 9900,
+      "estimado": false
+    },
+    {
+      "tipo": "mano_obra",
+      "descripcion": "descripción del trabajo",
+      "marca": "",
+      "cantidad": 1,
+      "precioUnitario": 18000,
+      "estimado": true
+    }
+  ],
+  "adicionales": [],
+  "notasCliente": ["Cambio de 3 térmicas seccionales Steck", "Instalación de peine eléctrico"],
+  "resumen": "Descripción breve del trabajo completo"
+}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+
+    let raw = data.content[0].text.trim();
+    // Limpiar posibles backticks
+    raw = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(raw);
+
+    presupuesto.items = parsed.items || [];
+    presupuesto.adicionales = parsed.adicionales || [];
+    presupuesto.notasCliente = parsed.notasCliente || [];
+    presupuesto.resumen = parsed.resumen || texto;
+
+    renderEditor();
+    showScreen('screen-editor');
+    document.getElementById('editorCliente').textContent = presupuesto.cliente;
+
+  } catch(e) {
+    toast('❌ Error: ' + e.message);
+    console.error(e);
+  }
+
+  btn.innerHTML = 'Interpretar con IA ✨';
+  btn.disabled = false;
+}
+
+// Leer el Sheet del local via API pública (debe estar publicado o compartido)
+async function leerSheetLocal() {
+  const SHEET_ID = '1rOSD5OQSDvZvcaMGwnSjI_ZkhkPF9DcNEIW1mKEGN-4';
+  const TAB = 'Inventario';
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(TAB)}&range=A4:D1000`;
+
+  const resp = await fetch(url);
+  const text = await resp.text();
+  // Extraer JSON del wrapper de Google
+  const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
+  const rows = json.table.rows;
+
+  const items = rows
+    .filter(r => r.c && r.c[0] && r.c[1] && r.c[3])
+    .map(r => {
+      const precio = r.c[3].v || 0;
+      return `${r.c[1].v} (${r.c[2]?.v || ''}) - $${precio.toLocaleString('es-AR')}`;
+    });
+
+  return items.slice(0, 250).join('\n');
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER EDITOR
+// ═══════════════════════════════════════════════════════════
+function renderEditor() {
+  renderItems();
+  renderAdicionales();
+  recalcular();
+}
+
+function renderItems() {
+  const cont = document.getElementById('itemsContainer');
+  if (!presupuesto.items.length) {
+    cont.innerHTML = '<div class="empty"><span class="emoji">🔧</span>Sin ítems aún</div>';
+    return;
+  }
+  cont.innerHTML = presupuesto.items.map((item, i) => `
+    <div class="item-card fade-in">
+      <div class="item-header">
+        <span class="item-badge ${item.tipo === 'material' ? 'badge-mat' : 'badge-mo'}">
+          ${item.tipo === 'material' ? '🔧 Material' : '👷 Mano de obra'}
+        </span>
+        ${item.estimado ? '<span class="item-badge badge-est">estimado</span>' : ''}
+        <button class="del-btn" onclick="eliminarItem(${i})">✕</button>
+      </div>
+      <input class="item-desc-input" type="text" value="${esc(item.descripcion)}"
+        onchange="presupuesto.items[${i}].descripcion=this.value">
+      ${item.marca ? `<div style="font-size:11px;color:var(--text3);margin-top:3px">${esc(item.marca)}</div>` : ''}
+      <div class="item-row">
+        <div class="field">
+          <label>Cantidad</label>
+          <input type="number" value="${item.cantidad}" min="0.1" step="0.1"
+            onchange="presupuesto.items[${i}].cantidad=parseFloat(this.value)||1;recalcular();updateSubtotal(${i})">
+        </div>
+        <div class="field">
+          <label>Precio unitario</label>
+          <input type="number" value="${item.precioUnitario}" min="0"
+            onchange="presupuesto.items[${i}].precioUnitario=parseFloat(this.value)||0;recalcular();updateSubtotal(${i})">
+        </div>
+      </div>
+      <div class="item-subtotal" id="sub_${i}">
+        = $${(item.cantidad * item.precioUnitario).toLocaleString('es-AR')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateSubtotal(i) {
+  const el = document.getElementById('sub_' + i);
+  if (el) {
+    const item = presupuesto.items[i];
+    el.textContent = '= $' + (item.cantidad * item.precioUnitario).toLocaleString('es-AR');
+  }
+}
+
+function eliminarItem(i) {
+  presupuesto.items.splice(i, 1);
+  renderItems();
+  recalcular();
+}
+
+function agregarItemManual() {
+  const tipo = document.getElementById('nuevoTipo').value;
+  const desc = document.getElementById('nuevaDesc').value.trim();
+  if (!desc) { toast('Escribí la descripción'); return; }
+  presupuesto.items.push({ tipo, descripcion: desc, marca: '', cantidad: 1, precioUnitario: 0, estimado: true });
+  document.getElementById('nuevaDesc').value = '';
+  renderItems();
+  recalcular();
+}
+
+function renderAdicionales() {
+  const cont = document.getElementById('adicionalesContainer');
+  if (!presupuesto.adicionales.length) { cont.innerHTML = ''; return; }
+  cont.innerHTML = presupuesto.adicionales.map((a, i) => `
+    <div class="adicional-row fade-in">
+      <input type="text" value="${esc(a.descripcion)}"
+        onchange="presupuesto.adicionales[${i}].descripcion=this.value" placeholder="Descripción">
+      <input type="number" value="${a.precio}"
+        onchange="presupuesto.adicionales[${i}].precio=parseFloat(this.value)||0;recalcular()" placeholder="$">
+      <button class="del-btn" onclick="eliminarAdicional(${i})" style="font-size:14px">✕</button>
+    </div>
+  `).join('');
+}
+
+function eliminarAdicional(i) {
+  presupuesto.adicionales.splice(i, 1);
+  renderAdicionales();
+  recalcular();
+}
+
+function agregarAdicional() {
+  const desc = document.getElementById('adDesc').value.trim();
+  const precio = parseFloat(document.getElementById('adPrecio').value) || 0;
+  if (!desc) { toast('Escribí la descripción del adicional'); return; }
+  presupuesto.adicionales.push({ descripcion: desc, precio });
+  document.getElementById('adDesc').value = '';
+  document.getElementById('adPrecio').value = '';
+  renderAdicionales();
+  recalcular();
+}
+
+// ═══════════════════════════════════════════════════════════
+// CÁLCULOS
+// ═══════════════════════════════════════════════════════════
+function onSlider() {
+  const v = document.getElementById('dificultad').value;
+  document.getElementById('dificultadVal').textContent = '+' + v + '%';
+  recalcular();
+}
+
+function recalcular() {
+  const dif = parseFloat(document.getElementById('dificultad')?.value) || 0;
+  document.getElementById('dificultadVal').textContent = '+' + dif + '%';
+
+  const subtotal = presupuesto.items.reduce((s, i) => s + i.cantidad * i.precioUnitario, 0);
+  const extraDif = Math.round(subtotal * dif / 100);
+  const mov = parseFloat(document.getElementById('movilidad')?.value) || 0;
+  const totalAd = presupuesto.adicionales.reduce((s, a) => s + (parseFloat(a.precio) || 0), 0);
+  const total = subtotal + extraDif + mov + totalAd;
+  const descuento = parseFloat(document.getElementById('descuento')?.value) || 0;
+
+  presupuesto.total = total;
+  presupuesto.dificultad = dif;
+  presupuesto.movilidad = mov;
+  presupuesto.descuento = descuento;
+
+  const box = document.getElementById('totalesBox');
+  if (!box) return;
+
+  let html = '';
+  const matTotal = presupuesto.items.filter(i => i.tipo === 'material').reduce((s, i) => s + i.cantidad * i.precioUnitario, 0);
+  const moTotal = presupuesto.items.filter(i => i.tipo === 'mano_obra').reduce((s, i) => s + i.cantidad * i.precioUnitario, 0);
+
+  if (matTotal > 0) html += row('🔧 Materiales', matTotal);
+  if (moTotal > 0) html += row('👷 Mano de obra', moTotal);
+  if (extraDif > 0) html += row(`📈 Dificultad (+${dif}%)`, extraDif);
+  if (mov > 0) html += row('🚗 Movilidad', mov);
+  if (totalAd > 0) html += row('➕ Adicionales', totalAd);
+  html += `<div class="totales-row total"><span>TOTAL</span><span class="totales-num">$${total.toLocaleString('es-AR')}</span></div>`;
+  if (descuento > 0) html += `<div class="totales-row efectivo"><span>💵 En efectivo</span><span class="totales-num">$${descuento.toLocaleString('es-AR')}</span></div>`;
+
+  box.innerHTML = html;
+}
+
+function row(label, val) {
+  return `<div class="totales-row"><span>${label}</span><span class="totales-num">$${val.toLocaleString('es-AR')}</span></div>`;
+}
+
+function recopilarAjustes() {
+  presupuesto.dificultad = parseFloat(document.getElementById('dificultad').value) || 0;
+  presupuesto.movilidad = parseFloat(document.getElementById('movilidad').value) || 0;
+  presupuesto.descuento = parseFloat(document.getElementById('descuento').value) || 0;
+  presupuesto.cliente = document.getElementById('clienteInput').value.trim() || 'Cliente';
+}
+
+// ═══════════════════════════════════════════════════════════
+// PREVIEW WHATSAPP
+// ═══════════════════════════════════════════════════════════
+function actualizarPreview() {
+  const conDetalle = document.getElementById('conDetalle')?.checked || false;
+  const texto = generarTextoWA(conDetalle);
+  document.getElementById('waPreview').textContent = texto;
+}
+
+function generarTextoWA(conDetalle) {
+  const dif = presupuesto.dificultad || 0;
+  const mov = presupuesto.movilidad || 0;
+  const subtotal = presupuesto.items.reduce((s, i) => s + i.cantidad * i.precioUnitario, 0);
+  const extraDif = Math.round(subtotal * dif / 100);
+  const totalAd = presupuesto.adicionales.reduce((s, a) => s + (parseFloat(a.precio) || 0), 0);
+  const total = subtotal + extraDif + mov + totalAd;
+
+  let txt = `Presupuesto: $${total.toLocaleString('es-AR')}(mano de obra y materiales)\n\n`;
+
+  (presupuesto.notasCliente || []).forEach(n => { txt += `• ${n}\n`; });
+
+  if (presupuesto.adicionales.length > 0) {
+    txt += `\nAdicionales:\n`;
+    presupuesto.adicionales.forEach(a => {
+      txt += `• ${a.descripcion}. $${(parseFloat(a.precio)||0).toLocaleString('es-AR')}\n`;
+    });
+  }
+
+  if (conDetalle) {
+    txt += `\nDetalle:\n`;
+    presupuesto.items.forEach(i => {
+      const sub = (i.cantidad * i.precioUnitario).toLocaleString('es-AR');
+      txt += `• ${i.descripcion}${i.marca ? ' ' + i.marca : ''} x${i.cantidad}: $${sub}\n`;
+    });
+  }
+
+  if (presupuesto.descuento > 0) {
+    txt += `\nEn efectivo $${presupuesto.descuento.toLocaleString('es-AR')}`;
+  }
+
+  return txt.trim();
+}
+
+function copiarWhatsApp() {
+  const texto = document.getElementById('waPreview').textContent;
+  navigator.clipboard.writeText(texto).then(() => {
+    toast('✅ ¡Copiado! Pegalo en WhatsApp');
+    const btn = document.getElementById('btnCopiar');
+    btn.textContent = '✅ ¡Copiado!';
+    setTimeout(() => btn.innerHTML = '📋 Copiar para WhatsApp', 2500);
+  }).catch(() => {
+    // Fallback para Safari/iOS
+    const ta = document.createElement('textarea');
+    ta.value = texto;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('✅ ¡Copiado!');
+  });
+}
+
+function nuevoPresupuesto() {
+  presupuesto = { cliente: '', items: [], adicionales: [], dificultad: 0, movilidad: 0, descuento: 0, total: 0, notasCliente: [], resumen: '' };
+  document.getElementById('dictadoInput').value = '';
+  document.getElementById('clienteInput').value = '';
+  document.getElementById('micStatus').textContent = '';
+  showScreen('screen-inicio');
+}
+
+// ═══════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  const key = localStorage.getItem('anthropic_key');
+  if (key) {
+    document.getElementById('apiKeyInput').value = key;
+    showScreen('screen-inicio');
+  } else {
+    showScreen('screen-config');
+  }
+});
+</script>
+</body>
+</html>
